@@ -256,7 +256,7 @@ const executePayment = async (req, res) => {
 
             await product.save();
           } else {
-            console.warn(`Product with ID ${product_id} not found.`);
+            console.warn(`Product with ID ${sku} not found.`);
           }
         }
 

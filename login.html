@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Nhập</title>
+</head>
+<body>
+  <h2>Form Đăng Nhập</h2>
+  <form id="loginForm" action="http://localhost:3001/api/user/login" method="POST">
+    <label for="username">Tên đăng nhập:</label>
+    <input type="text" id="username" name="username" required><br><br>
+
+    <label for="password">Mật khẩu:</label>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <button type="submit">Đăng Nhập</button>
+  </form>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+      event.preventDefault(); // Ngăn không gửi form trực tiếp để xử lý qua JavaScript
+
+      const formData = new FormData(this);
+      const data = {
+        username: formData.get('username'),
+        password: formData.get('password')
+      };
+
+      try {
+        const response = await fetch(this.action, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+          alert('Đăng nhập thành công!');
+          console.log('Token:', result.token); // Hiển thị token (hoặc lưu lại nếu cần)
+        } else {
+          alert(result.message || 'Đăng nhập thất bại.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra. Vui lòng thử lại sau.');
+      }
+    });
+  </script>
+</body>
+</html>

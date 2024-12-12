@@ -82,4 +82,21 @@ const getNewsById = async (req, res) => {
     }
 };
 
-module.exports = { createNews, getNews, updateNews, deleteNews, getNewsById };
+const searchNews = async (req, res) => {
+  try {
+    const { query } = req.query;
+    const news = await News.find({
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { content: { $regex: query, $options: "i" } },
+      ],
+    });
+    res.status(200).json(news);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Đã xảy ra lỗi khi tìm kiếm", error: error.message });
+  }
+};
+
+module.exports = { createNews, getNews, updateNews, deleteNews, getNewsById, searchNews };

@@ -1,6 +1,6 @@
 const User = require("../models/User");
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const login = async (req, res) => {
   try {
@@ -14,7 +14,9 @@ const login = async (req, res) => {
 
     // Check if the user's status is 0
     if (user.status === 0) {
-      return res.status(403).json({ message: "Your account is inactive. Please contact support." });
+      return res
+        .status(403)
+        .json({ message: "Your account is inactive. Please contact support." });
     }
 
     // Compare the password
@@ -24,13 +26,14 @@ const login = async (req, res) => {
     }
 
     // Create a JWT token
-    const token = jwt.sign({ id: user._id }, "your_jwt_secret", { expiresIn: "12h" });
+    const token = jwt.sign({ id: user._id }, "your_jwt_secret", {
+      expiresIn: "12h",
+    });
     res.json({ token, userId: user._id, role: user.role });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 const register = async (req, res) => {
   try {
@@ -45,7 +48,12 @@ const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Tạo người dùng mới
-    const newUser = new User({ username, email, password: hashedPassword, phoneNum });
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      phoneNum,
+    });
     await newUser.save();
 
     res.status(201).json({ message: "User created successfully" });
@@ -67,8 +75,8 @@ const getAllUser = async (req, res) => {
 
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password'); // Bỏ qua mật khẩu khi trả về
-    if (!user) return res.status(404).json({ message: 'User not found' });
+    const user = await User.findById(req.params.id).select("-password"); // Bỏ qua mật khẩu khi trả về
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     res.json(user);
   } catch (error) {
@@ -77,18 +85,18 @@ const getUserById = async (req, res) => {
 };
 
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
   if (!token) {
     console.log("No token provided");
-    return res.status(401).json({ message: 'Access token is missing' });
+    return res.status(401).json({ message: "Access token is missing" });
   }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       console.log("Token verification error:", err);
-      return res.status(403).json({ message: 'Invalid token' });
+      return res.status(403).json({ message: "Invalid token" });
     }
     req.user = user;
     next();
@@ -98,7 +106,15 @@ function authenticateToken(req, res, next) {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, email, phoneNum, role, status, currentPassword, newPassword } = req.body;
+    const {
+      username,
+      email,
+      phoneNum,
+      role,
+      status,
+      currentPassword,
+      newPassword,
+    } = req.body;
 
     // Find user by ID
     const user = await User.findById(id);
@@ -122,7 +138,9 @@ const updateUser = async (req, res) => {
     if (currentPassword && newPassword) {
       const isPasswordMatch = await user.comparePassword(currentPassword); // Assuming a `comparePassword` method exists
       if (!isPasswordMatch) {
-        return res.status(400).json({ message: "Current password is incorrect" });
+        return res
+          .status(400)
+          .json({ message: "Current password is incorrect" });
       }
       user.password = newPassword; // Set the new password (ensure you hash it in the `pre-save` hook)
     }
@@ -148,12 +166,40 @@ const deleteUser = async (req, res) => {
     const { id } = req.params;
     const deletedUser = await User.findByIdAndDelete(id);
 
-    if (!deletedUser) return res.status(404).json({ message: "User not found" });
+    if (!deletedUser)
+      return res.status(404).json({ message: "User not found" });
 
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-}
+};
 
-module.exports = { login, register, getAllUser, getUserById, authenticateToken, updateUser, deleteUser };
+const searchUser = async (req, res) => {
+  try {
+    const { query } = req.query;
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: "i" } },
+        { phoneNum: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+      ],
+    });
+    res.status(200).json(users);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Đã xảy ra lỗi khi tìm kiếm", error: error.message });
+  }
+};
+
+module.exports = {
+  login,
+  register,
+  getAllUser,
+  getUserById,
+  authenticateToken,
+  updateUser,
+  deleteUser,
+  searchUser,
+};

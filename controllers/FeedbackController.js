@@ -86,4 +86,21 @@ const getFeedbackByUserId = async (req, res) => {
   }
 };
 
-module.exports = { getAllFeedback, createFeedback, updateFeedback, deleteFeedback, getFeedbackByUserId };
+const searchFeedback = async (req, res) => {
+  try {
+    const { query } = req.query;
+    const feedback = await Feedback.find({
+      $or: [
+        { content: { $regex: query, $options: "i" } },
+        { "user.username": { $regex: query, $options: "i" } },
+      ],
+    });
+    res.status(200).json(feedback);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Đã xảy ra lỗi khi tìm kiếm", error: error.message });
+  }
+};
+
+module.exports = { getAllFeedback, createFeedback, updateFeedback, deleteFeedback, getFeedbackByUserId, searchFeedback };
